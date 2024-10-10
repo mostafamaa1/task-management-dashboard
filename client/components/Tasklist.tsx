@@ -20,11 +20,11 @@ const Tasklist = () => {
   const [sortBy, setSortBy] = useState<"title" | "priority" | "dueDate" | "none">("none");
 
 
-  const filteredTasks = tasks.filter(
+  const filteredTasks = tasks ? tasks.filter(
     (task) =>
       (statusFilter === "all" || task.status === statusFilter) &&
       (priorityFilter === "all" || task.priority === priorityFilter)
-  );
+  ) : [];
 
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     if (sortBy === "title")
@@ -157,9 +157,9 @@ const Tasklist = () => {
                     <Select
                       value={task.status}
                       onValueChange={async (value) => {
-                        const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/updatetask`;
+                        const url = '/api/tasks/crud';
                         const headers = {
-                          method: "POST",
+                          method: "PUT",
                           headers: {
                             "Content-Type": "application/json",
                           },
@@ -173,7 +173,7 @@ const Tasklist = () => {
                           title: "Task Updated",
                           variant: "default",
                           className: "bg-green-400 text-black",
-                          duration: 2000,
+                          duration: 1500,
                         });
                       }}
                     >

@@ -15,14 +15,13 @@ const Kanban = () => {
   const {toast} = useToast();
   const {tasks,setTasks} = useTaskStore();
 
-
   // update the task when it is dragged to a different column and update the status
 
   const updateTaskStatus = async (task:Task) => {
     try {
-      const url = `${process.env.NEXT_PUBLIC_BASE_URL}/api/updatetask`;
+      const url = '/api/tasks/crud';
       const headers = {
-        method: "POST",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
@@ -34,14 +33,14 @@ const Kanban = () => {
         title: "Task Updated",
         variant: "default",
         className: "bg-green-400 text-black",
-        duration: 2000,
+        duration: 1500,
       })
     } catch (error) {
       toast({
         title: "Error updating task status",
         variant: "default",
         className: "bg-red-400 text-black",
-        duration: 2000,
+        duration: 1500,
       })
       console.error("Error updating task status:", error);
     }
