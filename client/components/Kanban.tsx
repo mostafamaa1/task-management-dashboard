@@ -9,11 +9,15 @@ import { useToast } from "@/hooks/use-toast";
 import EditDeleteMenu from "./EditDeleteMenu";
 import { useTaskStore } from "@/store/taskStore";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { useSession } from "next-auth/react";
+import { io, Socket } from "socket.io-client";
+import { DefaultEventsMap } from "@socket.io/component-emitter";
 
-const Kanban = () => {
+const Kanban = ({ socket }: { socket: Socket<DefaultEventsMap, DefaultEventsMap> }) => {
 
   const {toast} = useToast();
   const {tasks,setTasks} = useTaskStore();
+  const { data: session } = useSession();
 
   // update the task when it is dragged to a different column and update the status
 
@@ -28,13 +32,20 @@ const Kanban = () => {
         body: JSON.stringify({ ...task, status: task.status }),
       };
       const res = await fetch(url, headers);
-      const data = await res.json();
-      toast({
-        title: "Task Updated",
-        variant: "default",
-        className: "bg-green-400 text-black",
-        duration: 1500,
-      })
+      // const data = await res.json();
+      if(res.ok) {
+        toast({
+          title: "Task Updated",
+          variant: "default",
+          className: "bg-green-400 text-black",
+          duration: 1500,
+        })
+          // Connect to the socket server and emit the update event
+          // socket = io('http://localhost:3000');
+          socket.emit('task:update', {
+            userName: session?.user.name || session?.user.email,
+          });
+      }
     } catch (error) {
       toast({
         title: "Error updating task status",

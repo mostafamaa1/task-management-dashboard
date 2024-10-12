@@ -2,7 +2,6 @@ import { EmptyTask } from "@/lib/constants";
 import { Task } from "@/types/types";
 import { create } from "zustand";
 
-
 export type State = {
   tasks: Task[];
   newTask: Task;
@@ -27,7 +26,7 @@ export const useTaskStore = create<State & Actions>((set) => ({
   addTask: (task: Task) => {
     set((state) => ({ tasks: [...state.tasks, { ...task }] }));
   },
-  deleteTask: (_id: string) =>
+  deleteTask: (_id: string) => 
     set((state) => ({ tasks: state.tasks.filter((task) => task._id !== _id) })),
   updateTask: (task: Task) => {
     set((state) => ({

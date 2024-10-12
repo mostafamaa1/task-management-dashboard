@@ -3,6 +3,10 @@ import { UserModel } from '@/lib/models/User';
 import type { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcrypt';
+import { io } from 'socket.io-client'; // Make sure to import socket.io-client on the client side
+
+// Initialize the Socket.IO client (this should be on the client side)
+const socket = io("http://localhost:3000"); // Update with your server address
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -27,6 +31,11 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!passwordMatch) throw new Error('Invalid Password');
+        // Emit user:login event after successful login
+        socket.emit('user:login', {
+          name: userFound.name,
+          email: userFound.email,
+        });
         return userFound;
       },
     }),
@@ -34,11 +43,11 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: '/login',
     signOut: '/login',
-    error: "/auth/error", // Error code passed in query string as ?error=
+    error: '/auth/error', // Error code passed in query string as ?error=
   },
   session: {
     strategy: 'jwt',
-    maxAge: 3600 
+    maxAge: 3600,
   },
   logger: {
     error: (error) => console.error(error), // Use console.error for server-side logging
@@ -47,17 +56,17 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-        if (user) {
-            // If user is present, add additional user info to the token
-            return { ...token, ...user };
-          }
-          return token;
-      },
-      async session({ session, token }) {
-        // Attach the JWT token to the session for use in the frontend
-        session.user = token as any;
-        return session;
-      },
+      if (user) {
+        // If user is present, add additional user info to the token
+        return { ...token, ...user };
+      }
+      return token;
     },
-    secret: process.env.AUTH_SECRET, // Use environment variable for secret
-  }
+    async session({ session, token }) {
+      // Attach the JWT token to the session for use in the frontend
+      session.user = token as any;
+      return session;
+    },
+  },
+  secret: process.env.AUTH_SECRET, // Use environment variable for secret
+};

@@ -1,71 +1,3 @@
-// "use client";
-
-// import Header from "./Header";
-// import Kanban from "./Kanban";
-// import Sidebar from "./Sidebar";
-// import { useEffect } from "react";
-// import Tasklist from "./Tasklist";
-// import { useRouter } from "next/navigation";
-// import { useTaskStore } from "@/store/taskStore";
-// import { useDashboardStore } from "@/store/dashboardStore";
-
-// export function DashboardComponent() {
-//   const { boardView, user, setUser } = useDashboardStore();
-//   const { setTasks } = useTaskStore();
-//   const router = useRouter();
-
-//   const fetchTasks = async () => {
-//     const url = '/api/tasks/all';
-//     const headers = {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//           "Authorization": user?.token || "",
-//         },
-//         body: JSON.stringify({user:user?.email}),
-//       }
-
-//     const res = await fetch(url, headers);
-//     const result = await res.json();
-//     setTasks(result.tasks);
-
-//   }
-
-//   useEffect(() => {
-//     setUser(
-//       localStorage.getItem("user")? JSON.parse(localStorage.getItem("user") as string): null
-//     );
-//   }, []);
-
-//   // Redirect to login if user is not logged in
-//   useEffect(() => {
-//     if (!user) {
-//       router.push("/login");
-//     }
-//   }, [user, router]);
-
-//   useEffect(()=>{
-//     try {
-//       fetchTasks()
-//     } catch (error) {
-//       console.error(error);
-//     }
-//   },[])
-
-//   if (!user) {
-//     return null;
-//   } else
-//     return (
-//       <div className="flex max-sm:flex-col h-screen bg-secondary dark:bg-background">
-//         <Sidebar />
-//         <div className="flex-1 p-8 overflow-auto ">
-//           <Header />
-//           {boardView === "list" ? <Tasklist/> : <Kanban />}
-//         </div>
-//       </div>
-//     );
-// }
-
 'use client';
 
 import Header from './Header';
@@ -77,21 +9,57 @@ import { useRouter } from 'next/navigation';
 import { useTaskStore } from '@/store/taskStore';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { useSession } from 'next-auth/react';
+import { useToast } from '@/hooks/use-toast';
+import LoadingSpinner from './animation/loader';
+import { io, Socket } from 'socket.io-client';
+import { DefaultEventsMap } from '@socket.io/component-emitter';
+
+let socket: Socket<DefaultEventsMap, DefaultEventsMap>; // Initialize Socket.IO client
 
 export function DashboardComponent() {
   const { boardView } = useDashboardStore();
   const { setTasks } = useTaskStore();
   const router = useRouter();
+  const { toast } = useToast();
   const { data: session, status } = useSession();
-  console.log("User object:", session?.user);
-  console.log("User object:", session?.user.token);
 
-  console.log('Session', session, status)
-  console.log('Attempting to fetch tasks...');
+  useEffect(() => {
+    // if(!socket.connected){}
+    socket = io('http://localhost:3000');
+    // Emit user login event when connected
+    socket.on('connect', () => {
+      console.log('Socket.IO connected');
+      toast({
+        title: 'Connection successful',
+        variant: 'default',
+        className: 'bg-yellow-500 text-black',
+        duration: 2000,
+      }); // Display a toast message
+    });
+
+    // Listen for the 'notification' event to display toasts when a user logs in
+    socket.on('user:login', (message: string) => {
+      console.log('Received notification:', message);
+
+      // Display the toast message to all connected users
+      toast({
+        title: 'A User Logged In',
+        description: message, // Display the message sent by the server
+        variant: 'default',
+        className: 'bg-green-400 text-black',
+        duration: 1500,
+      });
+    });
+    return () => {
+      socket.off('user:login');
+      socket.off('connect');
+      socket.disconnect(); // Clean up the listener when component unmounts
+    };
+  }, []);
 
   const fetchTasks = async () => {
     if (!session) {
-      console.log("No session available");
+      console.log('No session available');
       return; // Don't fetch if there's no session
     }
     const url = '/api/tasks/crud';
@@ -101,10 +69,7 @@ export function DashboardComponent() {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${session?.user?.token}`,
       },
-      // body: JSON.stringify({ user: session?.user?.email }),
     };
-
-    console.log('Fetching tasks from:', url, headers); // Debug log
 
     try {
       const res = await fetch(url, headers);
@@ -124,8 +89,6 @@ export function DashboardComponent() {
 
   // Redirect to login if no session
   useEffect(() => {
-    console.log("Session status:", status); // Log the session status
-    console.log("Session data:", session); // Log the session data
     if (status === 'unauthenticated') {
       router.push('/login');
     }
@@ -142,7 +105,7 @@ export function DashboardComponent() {
   }, [session]);
 
   if (status === 'loading') {
-    return <div>Loading...</div>; // Optional loading state
+    return <LoadingSpinner />; // Optional loading state
   }
 
   if (!session) {
@@ -154,7 +117,7 @@ export function DashboardComponent() {
       <Sidebar />
       <div className='flex-1 p-8 overflow-auto '>
         <Header />
-        {boardView === 'list' ? <Tasklist /> : <Kanban />}
+        {boardView === 'list' ? <Tasklist socket={socket} /> : <Kanban socket={socket} />}
       </div>
     </div>
   );
