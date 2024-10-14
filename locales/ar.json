@@ -1,0 +1,15 @@
+{
+  "Dashboard": {
+    "welcome": "مرحبًا بك في تطبيق إدارة المهام",
+    "login": "قم بتسجيل دخول في حسابك",
+    "logout": "تسجيل خروج",
+    "logged_out": "تسجيل خروج",
+    "logged_out_success": "تسجيل خروج",
+    "kanban_view": "كانبان",
+    "list_view": "قائمة",
+    "menu": "قائمة",
+    "addTask": "أضف مهمة جديدة",
+    "deleteTask": "تسجيل خروج",
+    "updateTask": "تسجيل خروج"
+  }
+}

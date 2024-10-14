@@ -1,0 +1,14 @@
+{
+  "Dashboard": {
+    "welcome": "Welcome to the Task Management App",
+    "login": "Login into your Account",
+    "logout": "Log out",
+    "logged_out_success": "Logged Out Successfully",
+    "kanban_view": "Kanban View",
+    "list_view": "List View",
+    "menu": "Menu",
+    "addTask": "Add Task",
+    "deleteTask": "Delete Task",
+    "updateTask": "Update Task"
+  }
+}
